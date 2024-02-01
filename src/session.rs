@@ -90,8 +90,13 @@ mod tests {
 
     use super::Session;
 
+    fn deserialize<T: Deserialize>(bytes: &[u8]) -> crate::error::Result<T> {
+        let mut reader = FieldReader::new(bytes);
+        T::deserialize(&mut reader)
+    }
+
     #[test]
-    fn round_trip() {
+    fn session_round_trip() {
         let session = Session {
             action: Action::new("Fight".to_string()).unwrap(),
             entity: crate::Entity {
@@ -102,8 +107,7 @@ mod tests {
         };
 
         let serialized = session.serialize();
-        let mut reader = FieldReader::new(&serialized);
-        let actual = Session::deserialize(&mut reader).unwrap();
+        let actual = deserialize::<Session>(&serialized).unwrap();
 
         assert_eq!(actual, session);
     }
@@ -112,8 +116,7 @@ mod tests {
     fn action_round_trip() {
         let expected = Action::new("Fight".to_string()).unwrap();
         let serialized = expected.serialize();
-        let mut reader = FieldReader::new(&serialized);
-        let actual = Action::deserialize(&mut reader).unwrap();
+        let actual = deserialize::<Action>(&serialized).unwrap();
 
         assert_eq!(actual, expected);
     }
@@ -126,8 +129,8 @@ mod tests {
             field_c: true,
         };
         let serialized = expected.serialize();
-        let mut reader = FieldReader::new(&serialized);
-        let actual = Entity::deserialize(&mut reader).unwrap();
+        eprintln!("BYTES: {serialized:?}");
+        let actual = deserialize::<Entity>(&serialized).unwrap();
 
         assert_eq!(actual, expected);
     }
