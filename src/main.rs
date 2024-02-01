@@ -1,9 +1,8 @@
 //use std::io::Cursor;
 
-use actions::Action;
 use args::Args;
-use error::{Result, Error};
-use serde::{Deserialize, Serialize, serialize, Field, FieldReader};
+use error::Result;
+use serde::{serialize, Deserialize, Field, FieldReader, Serialize};
 use session::Session;
 
 pub mod actions;
@@ -12,7 +11,7 @@ pub mod error;
 pub mod serde;
 pub mod session;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Entity {
     pub name: String,
     field_b: u8,
@@ -55,10 +54,12 @@ impl Deserialize for Entity {
 }
 
 fn print_help() {
-     println!("HELP!");
+    println!("HELP!");
     println!("-----");
     println!("  -h, --help        | Show this help");
     println!("  new <name>        | Create a new session");
+    println!("  load <name>       | Load a session");
+    println!("  action <action>   | Act upon a session");
 }
 
 fn main() -> Result<()> {
@@ -67,10 +68,10 @@ fn main() -> Result<()> {
     //let session = Session::load().unwrap();
     match args {
         Args::Help => print_help(),
-        Args::Action(args) => {
-            eprintln!("args are {args:?}");
+        Args::Action(kind, target) => {
+            eprintln!("args are {kind:?} and {target}");
             let session = Session::load()?;
-            //eprintln!("{session:?}");
+            eprintln!("Session comprises of: {session:?}");
         }
         Args::New(name) => {
             let entity = Entity::new(name);

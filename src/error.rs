@@ -1,6 +1,6 @@
 use std::fmt::Display;
-use std::str::Utf8Error;
 use std::io::Error as IoErr;
+use std::str::Utf8Error;
 use std::time::SystemTimeError;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -8,6 +8,7 @@ pub type Result<T> = std::result::Result<T, Error>;
 #[derive(Debug)]
 pub enum Error {
     InvalidArgs,
+    InvalidActionType,
     InvalidFieldType,
     MissingFieldLen,
     MissingFieldType,
@@ -21,6 +22,7 @@ impl Display for Error {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             Self::InvalidArgs => write!(f, "invalid argument"),
+            Self::InvalidActionType => write!(f, "invalid action type"),
             Self::InvalidFieldType => write!(f, "invalid field type"),
             Self::MissingFieldLen => write!(f, "missing field length"),
             Self::MissingFieldType => write!(f, "missing field type"),

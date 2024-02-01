@@ -1,6 +1,6 @@
-use std::io::{Cursor, Read};
+use std::u128;
 
-use crate::actions::Action;
+use crate::actions::{Action, ActionKind};
 use crate::error::{Error, Result};
 use crate::session::Session;
 use crate::Entity;
@@ -17,7 +17,7 @@ pub trait Deserialize {
 
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-enum FieldType {
+pub enum FieldType {
     Str = 1,
     U128,
     Byte,
@@ -34,75 +34,33 @@ pub enum Field<'a> {
     Bool(bool),
     U128(u128),
     Action(Action),
+    ActionKind(ActionKind),
     Entity(Entity),
     Session(Session),
 }
 
-impl TryFrom<Field<'_>> for String {
-    type Error = Error;
+macro_rules! impl_try_from {
+    ($type:ty, $field_type:path) => {
+        impl TryFrom<Field<'_>> for $type {
+            type Error = Error;
 
-    fn try_from(value: Field<'_>) -> Result<Self> {
-        match value {
-            Field::Str(val) => Ok(val.into()),
-            _ => Err(Error::InvalidFieldType),
+            fn try_from(value: Field<'_>) -> Result<Self> {
+                match value {
+                    $field_type(val) => Ok(val.into()),
+                    _ => Err(Error::InvalidFieldType),
+                }
+            }
         }
-    }
+    };
 }
 
-impl TryFrom<Field<'_>> for u128 {
-    type Error = Error;
-
-    fn try_from(value: Field<'_>) -> Result<Self> {
-        match value {
-            Field::U128(val) => Ok(val.into()),
-            _ => Err(Error::InvalidFieldType),
-        }
-    }
-}
-
-impl TryFrom<Field<'_>> for u8 {
-    type Error = Error;
-
-    fn try_from(value: Field<'_>) -> Result<Self> {
-        match value {
-            Field::Byte(val) => Ok(val),
-            _ => Err(Error::InvalidFieldType),
-        }
-    }
-}
-
-impl TryFrom<Field<'_>> for bool {
-    type Error = Error;
-
-    fn try_from(value: Field<'_>) -> Result<Self> {
-        match value {
-            Field::Bool(val) => Ok(val),
-            _ => Err(Error::InvalidFieldType),
-        }
-    }
-}
-
-impl TryFrom<Field<'_>> for Action {
-    type Error = Error;
-
-    fn try_from(value: Field<'_>) -> Result<Self> {
-        match value {
-            Field::Action(val) => Ok(val),
-            _ => Err(Error::InvalidFieldType),
-        }
-    }
-}
-
-impl TryFrom<Field<'_>> for Entity {
-    type Error = Error;
-
-    fn try_from(value: Field<'_>) -> Result<Self> {
-        match value {
-            Field::Entity(val) => Ok(val),
-            _ => Err(Error::InvalidFieldType),
-        }
-    }
-}
+impl_try_from!(u128, Field::U128);
+impl_try_from!(u8, Field::Byte);
+impl_try_from!(bool, Field::Bool);
+impl_try_from!(String, Field::Str);
+impl_try_from!(Action, Field::Action);
+impl_try_from!(ActionKind, Field::ActionKind);
+impl_try_from!(Entity, Field::Entity);
 
 fn write_len(buf: &mut Vec<u8>, len: usize) {
     let len = len as u16;
@@ -118,7 +76,7 @@ pub fn serialize(buf: &mut Vec<u8>, field: Field<'_>) {
         }
         Field::U128(b) => {
             buf.push(FieldType::U128 as u8);
-            write_len(buf, 1);
+            write_len(buf, 16);
             buf.extend(b.to_be_bytes());
         }
         Field::Byte(b) => {
@@ -149,34 +107,38 @@ pub fn serialize(buf: &mut Vec<u8>, field: Field<'_>) {
             write_len(buf, bytes.len());
             buf.extend(bytes);
         }
+        Field::ActionKind(action_kind) => {
+            buf.push(FieldType::ActionKind as u8);
+            write_len(buf, 1);
+            buf.push(action_kind as u8);
+        }
     }
 }
 
 pub struct FieldReader<'a> {
     buffer: &'a [u8],
-    pos: usize,
 }
 
 impl<'a> FieldReader<'a> {
     pub fn new(buffer: &'a [u8]) -> Self {
-        Self { buffer, pos: 0 }
+        Self { buffer }
     }
 
     fn field_type(&mut self) -> Result<FieldType> {
         if self.buffer.is_empty() {
             return Err(Error::MissingFieldType);
         }
-        let byte = &self.buffer[self.pos..][..1];
-        self.pos += 1;
-        self.buffer = &self.buffer[self.pos..];
+        let byte = self.buffer[0];
+        self.buffer = &self.buffer[1..];
 
-        println!("Field Type: {:?}", byte[0]);
-        match byte[0] {
+        eprintln!("Field Type: {:?}", byte);
+        match byte {
             1 => Ok(FieldType::Str),
             2 => Ok(FieldType::U128),
             3 => Ok(FieldType::Byte),
             4 => Ok(FieldType::Bool),
             5 => Ok(FieldType::Action),
+            6 => Ok(FieldType::ActionKind),
             7 => Ok(FieldType::Entity),
             8 => Ok(FieldType::Session),
             _ => Err(Error::InvalidFieldType),
@@ -193,17 +155,23 @@ impl<'a> FieldReader<'a> {
         Ok(len as usize)
     }
 
+    fn read_be_u128(input: &[u8]) -> u128 {
+        let (int_bytes, _) = input.split_at(std::mem::size_of::<u128>());
+        u128::from_be_bytes(int_bytes.try_into().unwrap())
+    }
+
     pub fn read_field<T>(&mut self) -> Result<T>
     where
         T: TryFrom<Field<'a>, Error = Error>,
     {
         let field_type = self.field_type()?;
-        println!("Field Type parsed: {:?}", field_type);
         let len = self.len()?;
+        eprintln!("Field Type parsed: {field_type:?} with length: {len}");
         let bytes = &self.buffer[..len];
-        self.buffer = &self.buffer[len-1..];
+        self.buffer = &self.buffer[len..];
 
-        println!("Entity bytes: {:?}", bytes);
+        eprintln!("Entity bytes: {bytes:?}");
+        eprintln!("Remaining buffer: {:?}", self.buffer);
         let field = match field_type {
             FieldType::Str => Field::Str(std::str::from_utf8(bytes)?),
             FieldType::Bool => Field::Bool(bytes[0] == 1),
@@ -220,9 +188,10 @@ impl<'a> FieldReader<'a> {
                 let mut new_reader = FieldReader::new(bytes);
                 Field::Session(Session::deserialize(&mut new_reader)?)
             }
-            _ => panic!(),
+            FieldType::U128 => Field::U128(Self::read_be_u128(bytes)),
+            FieldType::ActionKind => Field::ActionKind(unsafe { std::mem::transmute(bytes[0]) }),
         };
 
-        Ok(field.try_into()?)
+        field.try_into()
     }
 }
