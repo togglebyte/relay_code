@@ -68,8 +68,8 @@ fn main() -> Result<()> {
     //let session = Session::load().unwrap();
     match args {
         Args::Help => print_help(),
-        Args::Action(args) => {
-            eprintln!("args are {args:?}");
+        Args::Action(kind, target) => {
+            eprintln!("args are {kind:?} and {target}");
             let session = Session::load()?;
             eprintln!("Session comprises of: {session:?}");
         }
