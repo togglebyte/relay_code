@@ -64,7 +64,7 @@ fn print_help() {
 fn main() -> Result<()> {
     let args = Args::parse()?;
 
-    let session = Session::load().unwrap();
+    //let session = Session::load().unwrap();
     match args {
         Args::Help => print_help(),
         Args::Action(args) => {
