@@ -1,8 +1,7 @@
 //use std::io::Cursor;
 
-use actions::Action;
 use args::Args;
-use error::{Error, Result};
+use error::Result;
 use serde::{serialize, Deserialize, Field, FieldReader, Serialize};
 use session::Session;
 

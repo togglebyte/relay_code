@@ -1,4 +1,3 @@
-use std::io::Cursor;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::error::Result;
@@ -34,9 +33,9 @@ impl Action {
     pub fn exec(&mut self, entity: &mut Entity) {
         let action: String = String::from("fight");
         eprintln!("Action is : {action:?} and Entity is {0:?}", entity.name);
-        match &self.kind {
-            action => {
-                eprintln!("You're fighting {0}", action);
+        match self.kind.as_str() {
+            "fight" => {
+                eprintln!("You're fighting {0}", entity.name);
             }
             _ => eprintln!("Typed unknown action you have"),
         }

@@ -1,6 +1,5 @@
 use std::fs::{File, OpenOptions};
-use std::io::{Cursor, Read, Write};
-use std::path::Path;
+use std::io::{Read, Write};
 
 use crate::actions::Action;
 use crate::error::{Error, Result};
@@ -83,7 +82,7 @@ impl Serialize for Session {
 #[cfg(test)]
 mod tests {
     use crate::{
-        actions::{Action, ActionKind},
+        actions::Action,
         serde::{Deserialize, FieldReader, Serialize},
         Entity,
     };

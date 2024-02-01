@@ -17,7 +17,7 @@ pub trait Deserialize {
 
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
-enum FieldType {
+pub enum FieldType {
     Str = 1,
     U128,
     Byte,

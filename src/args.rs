@@ -27,11 +27,10 @@ impl Args {
             "load" => {
                 let name = args.next().ok_or(Error::InvalidArgs)?;
                 Ok(Args::Load(name))
-            },
+            }
             "action" => {
                 let action_arg = args.next().ok_or(Error::InvalidArgs)?;
                 eprintln!("Action arg is {action_arg:?}");
-                let exec_action = String::from("exec");
                 Ok(Args::Action(action_arg))
             }
             "--help" | "-h" => Ok(Args::Help),
