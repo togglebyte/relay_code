@@ -39,82 +39,28 @@ pub enum Field<'a> {
     Session(Session),
 }
 
-impl TryFrom<Field<'_>> for String {
-    type Error = Error;
+macro_rules! impl_try_from {
+    ($type:ty, $field_type:path) => {
+        impl TryFrom<Field<'_>> for $type {
+            type Error = Error;
 
-    fn try_from(value: Field<'_>) -> Result<Self> {
-        match value {
-            Field::Str(val) => Ok(val.into()),
-            _ => Err(Error::InvalidFieldType),
+            fn try_from(value: Field<'_>) -> Result<Self> {
+                match value {
+                    $field_type(val) => Ok(val.into()),
+                    _ => Err(Error::InvalidFieldType),
+                }
+            }
         }
-    }
+    };
 }
 
-impl TryFrom<Field<'_>> for u128 {
-    type Error = Error;
-
-    fn try_from(value: Field<'_>) -> Result<Self> {
-        match value {
-            Field::U128(val) => Ok(val),
-            _ => Err(Error::InvalidFieldType),
-        }
-    }
-}
-
-impl TryFrom<Field<'_>> for u8 {
-    type Error = Error;
-
-    fn try_from(value: Field<'_>) -> Result<Self> {
-        match value {
-            Field::Byte(val) => Ok(val),
-            _ => Err(Error::InvalidFieldType),
-        }
-    }
-}
-
-impl TryFrom<Field<'_>> for bool {
-    type Error = Error;
-
-    fn try_from(value: Field<'_>) -> Result<Self> {
-        match value {
-            Field::Bool(val) => Ok(val),
-            _ => Err(Error::InvalidFieldType),
-        }
-    }
-}
-
-impl TryFrom<Field<'_>> for Action {
-    type Error = Error;
-
-    fn try_from(value: Field<'_>) -> Result<Self> {
-        match value {
-            Field::Action(val) => Ok(val),
-            _ => Err(Error::InvalidFieldType),
-        }
-    }
-}
-
-impl TryFrom<Field<'_>> for ActionKind {
-    type Error = Error;
-
-    fn try_from(value: Field<'_>) -> Result<Self> {
-        match value {
-            Field::ActionKind(val) => Ok(val),
-            _ => Err(Error::InvalidFieldType),
-        }
-    }
-}
-
-impl TryFrom<Field<'_>> for Entity {
-    type Error = Error;
-
-    fn try_from(value: Field<'_>) -> Result<Self> {
-        match value {
-            Field::Entity(val) => Ok(val),
-            _ => Err(Error::InvalidFieldType),
-        }
-    }
-}
+impl_try_from!(u128, Field::U128);
+impl_try_from!(u8, Field::Byte);
+impl_try_from!(bool, Field::Bool);
+impl_try_from!(String, Field::Str);
+impl_try_from!(Action, Field::Action);
+impl_try_from!(ActionKind, Field::ActionKind);
+impl_try_from!(Entity, Field::Entity);
 
 fn write_len(buf: &mut Vec<u8>, len: usize) {
     let len = len as u16;
