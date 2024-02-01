@@ -168,7 +168,7 @@ impl<'a> FieldReader<'a> {
         let byte = self.buffer[0];
         self.buffer = &self.buffer[1..];
 
-        println!("Field Type: {:?}", byte);
+        eprintln!("Field Type: {:?}", byte);
         match byte {
             1 => Ok(FieldType::Str),
             2 => Ok(FieldType::U128),
@@ -202,12 +202,12 @@ impl<'a> FieldReader<'a> {
     {
         let field_type = self.field_type()?;
         let len = self.len()?;
-        println!("Field Type parsed: {field_type:?} with length: {len}");
+        eprintln!("Field Type parsed: {field_type:?} with length: {len}");
         let bytes = &self.buffer[..len];
         self.buffer = &self.buffer[len..];
 
-        println!("Entity bytes: {bytes:?}");
-        println!("Remaining buffer: {:?}", self.buffer);
+        eprintln!("Entity bytes: {bytes:?}");
+        eprintln!("Remaining buffer: {:?}", self.buffer);
         let field = match field_type {
             FieldType::Str => Field::Str(std::str::from_utf8(bytes)?),
             FieldType::Bool => Field::Bool(bytes[0] == 1),
