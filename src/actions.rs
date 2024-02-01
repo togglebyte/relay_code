@@ -10,6 +10,12 @@ fn start() -> Result<u128> {
     Ok(now)
 }
 
+pub enum ActionKind {
+    Fight,
+    Love,
+    Neutral
+}
+
 #[derive(Debug, Clone)]
 pub struct Action {
     start: u128,
@@ -26,8 +32,13 @@ impl Action {
     }
 
     pub fn exec(&mut self, entity: &mut Entity) {
-        match self.kind {
-            _ => panic!(),
+        let action: String = String::from("fight");
+        eprintln!("Action is : {action:?} and Entity is {0:?}", entity.name);
+        match &self.kind {
+            action => {
+                eprintln!("You're fighting {0}", action);
+            },
+            _ => eprintln!("Typed unknown action you have"),
         }
     }
 }
