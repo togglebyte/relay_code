@@ -1,4 +1,4 @@
-use std::io::Cursor;
+//use std::io::Cursor;
 
 use actions::Action;
 use args::Args;
@@ -14,7 +14,7 @@ pub mod session;
 
 #[derive(Debug, Clone)]
 pub struct Entity {
-    name: String,
+    pub name: String,
     field_b: u8,
     field_c: bool,
 }
@@ -55,7 +55,7 @@ impl Deserialize for Entity {
 }
 
 fn print_help() {
-    println!("HELP!");
+     println!("HELP!");
     println!("-----");
     println!("  -h, --help        | Show this help");
     println!("  new <name>        | Create a new session");
@@ -68,14 +68,20 @@ fn main() -> Result<()> {
     match args {
         Args::Help => print_help(),
         Args::Action(args) => {
+            eprintln!("args are {args:?}");
             let session = Session::load()?;
-            eprintln!("{session:?}");
+            //eprintln!("{session:?}");
         }
         Args::New(name) => {
             let entity = Entity::new(name);
             let session = Session::new(entity)?;
             session.save()?;
             println!("session saved");
+        }
+        Args::Load(name) => {
+            eprintln!("name is {name:?}");
+            let entity = Session::load()?;
+            eprintln!("{entity:?}");
         }
     }
 
