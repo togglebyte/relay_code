@@ -40,6 +40,7 @@ impl Session {
         let mut bytes = vec![];
         file.read_to_end(&mut bytes)?;
         if bytes.is_empty() {
+            println!("No entity found");
             return Err(Error::NoEntity);
         }
         let mut reader = FieldReader::new(bytes.as_slice());
@@ -59,7 +60,9 @@ impl Deserialize for Session {
     where
         Self: Sized,
     {
+        println!("Deserializing");
         let action = reader.read_field()?;
+        println!("Action: {:?}", action);
         let entity = reader.read_field()?;
 
         let entity = Self {
@@ -74,8 +77,8 @@ impl Deserialize for Session {
 impl Serialize for Session {
     fn serialize(&self) -> Vec<u8> {
         let mut bytes = vec![];
-        serialize(&mut bytes, Field::Action(self.action.clone()));
         serialize(&mut bytes, Field::Entity(self.entity.clone()));
+        serialize(&mut bytes, Field::Action(self.action.clone()));
         bytes
     }
 }

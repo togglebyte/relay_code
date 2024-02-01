@@ -16,6 +16,7 @@ pub trait Deserialize {
 }
 
 #[repr(u8)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 enum FieldType {
     Str = 1,
     U128,
@@ -168,13 +169,16 @@ impl<'a> FieldReader<'a> {
         let byte = &self.buffer[self.pos..][..1];
         self.pos += 1;
         self.buffer = &self.buffer[self.pos..];
+
+        println!("Field Type: {:?}", byte[0]);
         match byte[0] {
             1 => Ok(FieldType::Str),
-            2 => Ok(FieldType::Byte),
-            3 => Ok(FieldType::Bool),
-            4 => Ok(FieldType::Action),
-            5 => Ok(FieldType::Entity),
-            6 => Ok(FieldType::Session),
+            2 => Ok(FieldType::U128),
+            3 => Ok(FieldType::Byte),
+            4 => Ok(FieldType::Bool),
+            5 => Ok(FieldType::Action),
+            7 => Ok(FieldType::Entity),
+            8 => Ok(FieldType::Session),
             _ => Err(Error::InvalidFieldType),
         }
     }
@@ -194,16 +198,28 @@ impl<'a> FieldReader<'a> {
         T: TryFrom<Field<'a>, Error = Error>,
     {
         let field_type = self.field_type()?;
-        let bytes = &self.buffer[..self.len()?];
-        self.buffer = &self.buffer[bytes.len()..];
+        println!("Field Type parsed: {:?}", field_type);
+        let len = self.len()?;
+        let bytes = &self.buffer[..len];
+        self.buffer = &self.buffer[len-1..];
 
+        println!("Entity bytes: {:?}", bytes);
         let field = match field_type {
             FieldType::Str => Field::Str(std::str::from_utf8(bytes)?),
             FieldType::Bool => Field::Bool(bytes[0] == 1),
             FieldType::Byte => Field::Byte(bytes[0]),
-            FieldType::Action => Field::Action(Action::deserialize(self)?),
-            FieldType::Entity => Field::Entity(Entity::deserialize(self)?),
-            FieldType::Session => Field::Session(Session::deserialize(self)?),
+            FieldType::Action => {
+                let mut new_reader = FieldReader::new(bytes);
+                Field::Action(Action::deserialize(&mut new_reader)?)
+            }
+            FieldType::Entity => {
+                let mut new_reader = FieldReader::new(bytes);
+                Field::Entity(Entity::deserialize(&mut new_reader)?)
+            }
+            FieldType::Session => {
+                let mut new_reader = FieldReader::new(bytes);
+                Field::Session(Session::deserialize(&mut new_reader)?)
+            }
             _ => panic!(),
         };
 
