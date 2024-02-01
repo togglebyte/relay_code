@@ -1,7 +1,7 @@
 use std::fs::{File, OpenOptions};
 use std::io::{Read, Write};
 
-use crate::actions::Action;
+use crate::actions::{Action, ActionKind};
 use crate::error::{Error, Result};
 use crate::serde::{serialize, Deserialize, Field, FieldReader, Serialize};
 use crate::Entity;
@@ -18,7 +18,7 @@ impl Session {
     pub fn new(entity: Entity) -> Result<Self> {
         let inst = Self {
             entity,
-            action: Action::new("no action".into())?,
+            action: Action::new(ActionKind::Fight, "Nobody".into())?,
         };
         Ok(inst)
     }
@@ -82,7 +82,7 @@ impl Serialize for Session {
 #[cfg(test)]
 mod tests {
     use crate::{
-        actions::Action,
+        actions::{Action, ActionKind},
         serde::{Deserialize, FieldReader, Serialize},
         Entity,
     };
@@ -97,7 +97,7 @@ mod tests {
     #[test]
     fn session_round_trip() {
         let session = Session {
-            action: Action::new("Fight".to_string()).unwrap(),
+            action: Action::new(ActionKind::Fight, "Gilgamesh".to_string()).unwrap(),
             entity: crate::Entity {
                 name: "florp".to_string(),
                 field_b: 69,
@@ -113,7 +113,7 @@ mod tests {
 
     #[test]
     fn action_round_trip() {
-        let expected = Action::new("Fight".to_string()).unwrap();
+        let expected = Action::new(ActionKind::Love, "Knuckles".to_string()).unwrap();
         let serialized = expected.serialize();
         let actual = deserialize::<Action>(&serialized).unwrap();
 

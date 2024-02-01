@@ -1,6 +1,6 @@
 use std::u128;
 
-use crate::actions::Action;
+use crate::actions::{Action, ActionKind};
 use crate::error::{Error, Result};
 use crate::session::Session;
 use crate::Entity;
@@ -34,6 +34,7 @@ pub enum Field<'a> {
     Bool(bool),
     U128(u128),
     Action(Action),
+    ActionKind(ActionKind),
     Entity(Entity),
     Session(Session),
 }
@@ -88,6 +89,17 @@ impl TryFrom<Field<'_>> for Action {
     fn try_from(value: Field<'_>) -> Result<Self> {
         match value {
             Field::Action(val) => Ok(val),
+            _ => Err(Error::InvalidFieldType),
+        }
+    }
+}
+
+impl TryFrom<Field<'_>> for ActionKind {
+    type Error = Error;
+
+    fn try_from(value: Field<'_>) -> Result<Self> {
+        match value {
+            Field::ActionKind(val) => Ok(val),
             _ => Err(Error::InvalidFieldType),
         }
     }
@@ -149,6 +161,11 @@ pub fn serialize(buf: &mut Vec<u8>, field: Field<'_>) {
             write_len(buf, bytes.len());
             buf.extend(bytes);
         }
+        Field::ActionKind(action_kind) => {
+            buf.push(FieldType::ActionKind as u8);
+            write_len(buf, 1);
+            buf.push(action_kind as u8);
+        }
     }
 }
 
@@ -175,6 +192,7 @@ impl<'a> FieldReader<'a> {
             3 => Ok(FieldType::Byte),
             4 => Ok(FieldType::Bool),
             5 => Ok(FieldType::Action),
+            6 => Ok(FieldType::ActionKind),
             7 => Ok(FieldType::Entity),
             8 => Ok(FieldType::Session),
             _ => Err(Error::InvalidFieldType),
@@ -225,7 +243,7 @@ impl<'a> FieldReader<'a> {
                 Field::Session(Session::deserialize(&mut new_reader)?)
             }
             FieldType::U128 => Field::U128(Self::read_be_u128(bytes)),
-            FieldType::ActionKind => todo!(),
+            FieldType::ActionKind => Field::ActionKind(unsafe { std::mem::transmute(bytes[0]) }),
         };
 
         field.try_into()
