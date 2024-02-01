@@ -2,8 +2,8 @@
 
 use actions::Action;
 use args::Args;
-use error::{Result, Error};
-use serde::{Deserialize, Serialize, serialize, Field, FieldReader};
+use error::{Error, Result};
+use serde::{serialize, Deserialize, Field, FieldReader, Serialize};
 use session::Session;
 
 pub mod actions;
@@ -55,10 +55,12 @@ impl Deserialize for Entity {
 }
 
 fn print_help() {
-     println!("HELP!");
+    println!("HELP!");
     println!("-----");
     println!("  -h, --help        | Show this help");
     println!("  new <name>        | Create a new session");
+    println!("  load <name>       | Load a session");
+    println!("  action <action>   | Act upon a session");
 }
 
 fn main() -> Result<()> {
