@@ -13,10 +13,10 @@ fn start() -> Result<u128> {
 pub enum ActionKind {
     Fight,
     Love,
-    Neutral
+    Neutral,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Action {
     start: u128,
     kind: String,
@@ -37,7 +37,7 @@ impl Action {
         match &self.kind {
             action => {
                 eprintln!("You're fighting {0}", action);
-            },
+            }
             _ => eprintln!("Typed unknown action you have"),
         }
     }
@@ -48,6 +48,7 @@ impl Serialize for Action {
         let mut bytes = vec![];
         serialize(&mut bytes, Field::U128(self.start));
         serialize(&mut bytes, Field::Str(&self.kind));
+        eprintln!("BUFFER: {bytes:?}");
         bytes
     }
 }

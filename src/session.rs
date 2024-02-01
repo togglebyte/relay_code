@@ -9,7 +9,7 @@ use crate::Entity;
 
 const FILENAME: &str = "entity.lol";
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Session {
     action: Action,
     entity: Entity,
@@ -61,14 +61,11 @@ impl Deserialize for Session {
         Self: Sized,
     {
         println!("Deserializing");
+        let entity = reader.read_field()?;
         let action = reader.read_field()?;
         println!("Action: {:?}", action);
-        let entity = reader.read_field()?;
 
-        let entity = Self {
-            action,
-            entity,
-        };
+        let entity = Self { action, entity };
 
         Ok(entity)
     }
@@ -80,5 +77,58 @@ impl Serialize for Session {
         serialize(&mut bytes, Field::Entity(self.entity.clone()));
         serialize(&mut bytes, Field::Action(self.action.clone()));
         bytes
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use crate::{
+        actions::{Action, ActionKind},
+        serde::{Deserialize, FieldReader, Serialize},
+        Entity,
+    };
+
+    use super::Session;
+
+    #[test]
+    fn round_trip() {
+        let session = Session {
+            action: Action::new("Fight".to_string()).unwrap(),
+            entity: crate::Entity {
+                name: "florp".to_string(),
+                field_b: 69,
+                field_c: true,
+            },
+        };
+
+        let serialized = session.serialize();
+        let mut reader = FieldReader::new(&serialized);
+        let actual = Session::deserialize(&mut reader).unwrap();
+
+        assert_eq!(actual, session);
+    }
+
+    #[test]
+    fn action_round_trip() {
+        let expected = Action::new("Fight".to_string()).unwrap();
+        let serialized = expected.serialize();
+        let mut reader = FieldReader::new(&serialized);
+        let actual = Action::deserialize(&mut reader).unwrap();
+
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn entity_round_trip() {
+        let expected = Entity {
+            name: "florp".to_string(),
+            field_b: 69,
+            field_c: true,
+        };
+        let serialized = expected.serialize();
+        let mut reader = FieldReader::new(&serialized);
+        let actual = Entity::deserialize(&mut reader).unwrap();
+
+        assert_eq!(actual, expected);
     }
 }

@@ -12,7 +12,7 @@ pub mod error;
 pub mod serde;
 pub mod session;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Entity {
     pub name: String,
     field_b: u8,
@@ -72,7 +72,7 @@ fn main() -> Result<()> {
         Args::Action(args) => {
             eprintln!("args are {args:?}");
             let session = Session::load()?;
-            //eprintln!("{session:?}");
+            eprintln!("Session comprises of: {session:?}");
         }
         Args::New(name) => {
             let entity = Entity::new(name);

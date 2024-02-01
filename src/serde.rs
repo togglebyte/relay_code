@@ -1,4 +1,5 @@
 use std::io::{Cursor, Read};
+use std::u128;
 
 use crate::actions::Action;
 use crate::error::{Error, Result};
@@ -118,7 +119,7 @@ pub fn serialize(buf: &mut Vec<u8>, field: Field<'_>) {
         }
         Field::U128(b) => {
             buf.push(FieldType::U128 as u8);
-            write_len(buf, 1);
+            write_len(buf, 16);
             buf.extend(b.to_be_bytes());
         }
         Field::Byte(b) => {
@@ -193,6 +194,12 @@ impl<'a> FieldReader<'a> {
         Ok(len as usize)
     }
 
+    fn read_be_u128(input: &mut &[u8]) -> u128 {
+        let (int_bytes, rest) = input.split_at(std::mem::size_of::<u128>());
+        *input = rest;
+        u128::from_be_bytes(int_bytes.try_into().unwrap())
+    }
+
     pub fn read_field<T>(&mut self) -> Result<T>
     where
         T: TryFrom<Field<'a>, Error = Error>,
@@ -200,10 +207,10 @@ impl<'a> FieldReader<'a> {
         let field_type = self.field_type()?;
         println!("Field Type parsed: {:?}", field_type);
         let len = self.len()?;
-        let bytes = &self.buffer[..len];
-        self.buffer = &self.buffer[len-1..];
+        let mut bytes = &self.buffer[..len];
+        self.buffer = &self.buffer[len - 1..];
 
-        println!("Entity bytes: {:?}", bytes);
+        println!("Entity bytes: {bytes:?}");
         let field = match field_type {
             FieldType::Str => Field::Str(std::str::from_utf8(bytes)?),
             FieldType::Bool => Field::Bool(bytes[0] == 1),
@@ -220,9 +227,10 @@ impl<'a> FieldReader<'a> {
                 let mut new_reader = FieldReader::new(bytes);
                 Field::Session(Session::deserialize(&mut new_reader)?)
             }
-            _ => panic!(),
+            FieldType::U128 => Field::U128(Self::read_be_u128(&mut bytes)),
+            FieldType::ActionKind => todo!(), //_ => panic!(),
         };
 
-        Ok(field.try_into()?)
+        field.try_into()
     }
 }
