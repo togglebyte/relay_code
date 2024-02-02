@@ -10,7 +10,39 @@ pub enum Args {
     Action(ActionKind, String),
     New(String),
     Load(String),
-    Help,
+    Help(Help),
+}
+
+#[derive(Debug)]
+pub enum Help {
+    General,
+    Action,
+}
+
+impl Help {
+    pub fn print(&self) {
+        match self {
+            Help::General => println!(
+                "\
+HELP!
+-----
+-h, --help        | Show this help
+new <name>        | Create a new session
+load <name>       | Load a session
+action <action>   | Act upon a session"
+            ),
+            Help::Action => println!(
+                "\
+HELP for action!
+----------------
+action -h, --help | Show this help
+action fight <target>
+action love <target>
+action neutral <target>
+"
+            ),
+        }
+    }
 }
 
 fn parse_action_kind<S: AsRef<str>>(action: S) -> Result<ActionKind> {
@@ -27,28 +59,31 @@ impl Args {
         let mut args = args().skip(1);
 
         let next_arg = match args.next() {
-            None => return Ok(Args::Help),
+            None => return Ok(Args::Help(Help::General)),
             Some(arg) => arg,
         };
 
         match next_arg.as_str() {
             "new" => {
-                let name = args.next().ok_or(Error::InvalidArgs)?;
+                let name = args.next().ok_or(Error::InvalidArgs(""))?;
                 Ok(Args::New(name))
             }
             "load" => {
-                let name = args.next().ok_or(Error::InvalidArgs)?;
+                let name = args.next().ok_or(Error::InvalidArgs(""))?;
                 Ok(Args::Load(name))
             }
             "action" => {
-                let action_arg = args.next().ok_or(Error::InvalidArgs)?;
-                let target_arg = args.next().ok_or(Error::InvalidArgs)?;
+                if matches!(args.next().as_deref(), Some("-h" | "--help")) {
+                    return Ok(Args::Help(Help::Action));
+                }
+                let action_arg = args.next().ok_or(Error::InvalidArgs("action "))?;
+                let target_arg = args.next().ok_or(Error::InvalidArgs("action "))?;
                 let action_arg = parse_action_kind(action_arg)?;
-                eprintln!("Action arg is {action_arg:?} where target_arg is {target_arg}");
+                log!("Action arg is {action_arg:?} where target_arg is {target_arg}");
                 Ok(Args::Action(action_arg, target_arg))
             }
-            "--help" | "-h" => Ok(Args::Help),
-            _ => Ok(Args::Help),
+            // "--help" | "-h" => Ok(Args::Help),
+            _ => Ok(Args::Help(Help::General)),
         }
     }
 }

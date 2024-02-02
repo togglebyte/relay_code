@@ -1,12 +1,15 @@
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use crate::error::Result;
-use crate::serde::{serialize, Deserialize, Field, FieldReader, Serialize};
+use crate::serde::{Deserialize, Field, FieldReader, FieldType, Serialize, Serializer};
 use crate::Entity;
+use ActionKind::*;
 
-fn start() -> Result<u128> {
-    let now = SystemTime::now().duration_since(UNIX_EPOCH)?.as_millis();
-    Ok(now)
+fn start() -> i128 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as i128)
+        .unwrap_or_else(|e| -(e.duration().as_millis() as i128))
 }
 
 #[repr(u8)]
@@ -15,28 +18,41 @@ pub enum ActionKind {
     Fight,
     Love,
     Neutral,
+    Spawn,
+    Die,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Action {
-    start: u128,
-    target: String,
-    kind: ActionKind,
+    pub start: i128,
+    pub entity: String,
+    pub kind: ActionKind,
+    pub target: Option<String>,
 }
 
 impl Action {
-    pub fn new(kind: ActionKind, target: String) -> Result<Self> {
+    pub fn interact(kind: ActionKind, entity: &Entity, target: &Entity) -> Result<Self> {
         let inst = Self {
-            start: start()?,
+            start: start(),
             kind,
-            target,
+            entity: entity.name.to_owned(),
+            target: Some(target.name.to_string()),
         };
         Ok(inst)
     }
 
+    pub fn spawn(entity: String) -> Self {
+        Self {
+            start: start(),
+            entity,
+            target: None,
+            kind: Spawn,
+        }
+    }
+
     pub fn exec(&mut self, entity: &mut Entity) {
         let action: String = String::from("fight");
-        eprintln!("Action is : {action:?} and Entity is {0:?}", entity.name);
+        log!("Action is : {action:?} and Entity is {0:?}", entity.name);
         match self.kind {
             ActionKind::Fight => {
                 eprintln!("You're fighting {0}", entity.name);
@@ -47,13 +63,13 @@ impl Action {
 }
 
 impl Serialize for Action {
-    fn serialize(&self) -> Vec<u8> {
-        let mut bytes = vec![];
-        serialize(&mut bytes, Field::U128(self.start));
-        serialize(&mut bytes, Field::ActionKind(self.kind));
-        serialize(&mut bytes, Field::Str(&self.target));
-        eprintln!("BUFFER: {bytes:?}");
-        bytes
+    fn serialize(&self, buf: &mut Serializer) -> usize {
+        let s = buf.unknown_size(FieldType::Action);
+        let mut size = Field::I128(self.start).serialize(buf);
+        size += Field::Str(self.entity.clone()).serialize(buf);
+        size += Field::ActionKind(self.kind).serialize(buf);
+        size += Field::Str(self.target.clone().unwrap_or_default()).serialize(buf);
+        s(buf, size)
     }
 }
 
@@ -62,10 +78,15 @@ impl Deserialize for Action {
     where
         Self: Sized,
     {
+        reader.ensure_type(FieldType::Action)?;
         let action = Self {
             start: reader.read_field()?,
+            entity: reader.read_field()?,
             kind: reader.read_field()?,
-            target: reader.read_field()?,
+            target: {
+                let target: String = reader.read_field()?;
+                (!target.is_empty()).then_some(target)
+            },
         };
 
         Ok(action)

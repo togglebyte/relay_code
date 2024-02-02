@@ -2,19 +2,21 @@
 
 use args::Args;
 use error::Result;
-use serde::{serialize, Deserialize, Field, FieldReader, Serialize};
+use serde::{Deserialize, Field, FieldReader, FieldType, Serialize, Serializer};
 use session::Session;
 
-pub mod actions;
-pub mod args;
-pub mod error;
-pub mod serde;
-pub mod session;
+#[macro_use]
+mod log;
+mod actions;
+mod args;
+mod error;
+mod serde;
+mod session;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Entity {
     pub name: String,
-    field_b: u8,
+    health: u8,
     field_c: bool,
 }
 
@@ -22,19 +24,19 @@ impl Entity {
     pub fn new(name: String) -> Self {
         Self {
             name,
-            field_b: 0,
+            health: 5,
             field_c: false,
         }
     }
 }
 
 impl Serialize for Entity {
-    fn serialize(&self) -> Vec<u8> {
-        let mut bytes = vec![];
-        serialize(&mut bytes, Field::Str(&self.name));
-        serialize(&mut bytes, Field::Byte(self.field_b));
-        serialize(&mut bytes, Field::Bool(self.field_c));
-        bytes
+    fn serialize(&self, buf: &mut Serializer) -> usize {
+        let s = buf.unknown_size(FieldType::Entity);
+        let mut size = Field::Str(self.name.clone()).serialize(buf);
+        size += Field::Byte(self.health).serialize(buf);
+        size += Field::Bool(self.field_c).serialize(buf);
+        s(buf, size)
     }
 }
 
@@ -43,9 +45,10 @@ impl Deserialize for Entity {
     where
         Self: Sized,
     {
+        reader.ensure_type(FieldType::Entity)?;
         let entity = Self {
             name: reader.read_field()?,
-            field_b: reader.read_field()?,
+            health: reader.read_field()?,
             field_c: reader.read_field()?,
         };
 
@@ -53,36 +56,28 @@ impl Deserialize for Entity {
     }
 }
 
-fn print_help() {
-    println!("HELP!");
-    println!("-----");
-    println!("  -h, --help        | Show this help");
-    println!("  new <name>        | Create a new session");
-    println!("  load <name>       | Load a session");
-    println!("  action <action>   | Act upon a session");
-}
-
 fn main() -> Result<()> {
+    log::set_log();
     let args = Args::parse()?;
 
     //let session = Session::load().unwrap();
     match args {
-        Args::Help => print_help(),
+        Args::Help(help) => help.print(),
         Args::Action(kind, target) => {
-            eprintln!("args are {kind:?} and {target}");
-            let session = Session::load()?;
+            log!("args are {kind:?} and {target}");
+            let session = Session::load(&target)?;
             eprintln!("Session comprises of: {session:?}");
         }
         Args::New(name) => {
             let entity = Entity::new(name);
             let session = Session::new(entity)?;
             session.save()?;
-            println!("session saved");
+            eprintln!("session saved");
         }
         Args::Load(name) => {
-            eprintln!("name is {name:?}");
-            let entity = Session::load()?;
-            eprintln!("{entity:?}");
+            log!("name is {name:?}");
+            let session = Session::load(&name)?;
+            eprintln!("{session}");
         }
     }
 
