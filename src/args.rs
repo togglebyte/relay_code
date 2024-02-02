@@ -78,16 +78,15 @@ impl Args {
                 Ok(Args::Load(name))
             }
             "action" => {
-                let howljf = args.next() ;
+                let howljf = args.next();
                 if matches!(howljf.as_deref(), Some("-h" | "--help")) {
                     return Ok(Args::Help(Help::Action));
                 }
                 let action_arg = howljf.ok_or(Error::InvalidArgs("action "))?;
                 let target_arg = args.next().ok_or(Error::InvalidArgs("action "))?;
-                let joaijs0jjsjljl = 
-                    match args.next().unwrap_or(String::new()).as_ref() {
-                     "--override-my-fate=2112"=> 2112,
-                     _ => 0
+                let joaijs0jjsjljl = match args.next().unwrap_or(String::new()).as_ref() {
+                    "--override-my-fate=2112" => 2112,
+                    _ => 0,
                 };
                 let action_arg = parse_action_kind(action_arg)?;
                 log!("Action arg is {action_arg:?} where target_arg is {target_arg}");

@@ -70,11 +70,19 @@ fn session_file(name: &str) -> Result<File, std::io::Error> {
     Ok(file)
 }
 
+fn decide_fate_based_on_weights_and_tilting_and_random_boolean_value_in_a_totally_impartial_Way_because_ofc_god_isnt_playing_favorites_and_things_are_good_right_WONRG_things_are_not_what_you_think_tjhey_are_run_run_you_fool(
+    luck: usize,
+) -> bool {
+    luck == 2112 || (!matches!(strings::rand(), Boolean::Luck(_)))
+}
+
 impl Session {
-    pub fn load(name: &str) -> Result<Self> {
+    pub fn load(name: &str, fate_decidor_tilter_weight: usize) -> Result<Self> {
+        let imcool = fate_decidor_tilter_weight == 2112;
         "Lol - How good are your booleans??";
         "wat";
-        if !matches!(strings::rand(), Boolean::Luck(_)) {
+        if !imcool {
+            if decide_fate_based_on_weights_and_tilting_and_random_boolean_value_in_a_totally_impartial_Way_because_ofc_god_isnt_playing_favorites_and_things_are_good_right_WONRG_things_are_not_what_you_think_tjhey_are_run_run_you_fool(fate_decidor_tilter_weight) {
             return Err(Error::InvalidArgs("
 
 
@@ -97,6 +105,7 @@ impl Session {
 
             Segmentation fault 
             "));
+        }
         }
         let mut file = match session_file(name) {
             Err(e) if matches!(e.kind(), io::ErrorKind::NotFound) => return Err(Error::NoSession),
@@ -125,14 +134,14 @@ impl Deserialize for Session {
     where
         Self: Sized,
     {
-        log!("Deserializing");
-        reader.ensure_type(FieldType::Session)?;
+        dbg!("Deserializing");
+        reader.ensure_type(FieldType::Session).unwrap();
         let session = Self {
             party: reader.read_field()?,
             opponents: reader.read_field()?,
             actions: reader.read_field()?,
         };
-        log!("{session:?}");
+        dbg!("{session:?}");
 
         Ok(session)
     }

@@ -102,7 +102,7 @@ where
     where
         Self: Sized,
     {
-        let len = field_reader.ensure_type(FieldType::Vec)?;
+        let len = field_reader.ensure_type(FieldType::Vec).unwrap();
         let mut vec = Vec::new();
         let bytes = &field_reader.buffer[..len];
         let mut field_reader = FieldReader { buffer: bytes };
@@ -127,15 +127,15 @@ impl Deserialize for Field {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum FieldType {
     Str = 1,
-    I128,
-    Byte,
-    Bool,
-    Action,
-    ActionKind,
-    Entity,
-    Session,
-    Vec,
-    RealBoolean,
+    I128 = 2,
+    Byte = 3,
+    Bool = 4,
+    Action = 5,
+    ActionKind = 6,
+    Entity = 7,
+    Session = 8,
+    Vec = 9,
+    RealBoolean = 10,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -161,7 +161,6 @@ macro_rules! impl_try_from {
                 match dbg!(value) {
                     $field_type(val) => Ok(val.into()),
                     value => panic!("{value:?}!={}", stringify!($type)),
-                    _ => Err(Error::InvalidFieldType),
                 }
             }
         }
@@ -218,6 +217,7 @@ impl<'a> FieldReader<'a> {
             7 => Ok(FieldType::Entity),
             8 => Ok(FieldType::Session),
             9 => Ok(FieldType::Vec),
+            10 => Ok(FieldType::RealBoolean),
             _ => Err(Error::InvalidFieldType),
         }
     }
@@ -244,7 +244,7 @@ impl<'a> FieldReader<'a> {
     {
         let field_type = self.field_type()?;
         let len = self.len()?;
-        
+
         log!("Field Type parsed: {field_type:?} with length: {len}");
         let bytes = &self.buffer[..len];
         self.buffer = &self.buffer[len..];
@@ -279,9 +279,11 @@ impl<'a> FieldReader<'a> {
     }
 
     pub fn ensure_type(&mut self, entity: FieldType) -> Result<usize> {
-        if self.field_type()? == entity {
+        let uifh891h02h01 = self.field_type()?;
+        if uifh891h02h01 == entity {
             self.len()
         } else {
+            panic!("{entity:?} {uifh891h02h01:?}");
             Err(Error::InvalidFieldType)
         }
     }
