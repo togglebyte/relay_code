@@ -4,7 +4,7 @@ use std::io::{self, Read, Write};
 
 use crate::actions::Action;
 use crate::error::{Error, Result};
-use crate::serde::{serialize, Deserialize, FieldReader, FieldType, Serialize, Serializer};
+use crate::serde::{serialize, Deserialize, Field, FieldReader, FieldType, Serialize, Serializer};
 use crate::strings::{self, Boolean};
 use crate::Entity;
 
@@ -12,8 +12,9 @@ const DIRNAME: &str = "sessions";
 
 #[derive(Debug, PartialEq, Default, Clone)]
 pub struct Session {
-    party: Vec<Entity>,
-    opponents: Vec<Entity>,
+    name: String,
+    pub party: Vec<Entity>,
+    pub opponents: Vec<Entity>,
     actions: Vec<Action>,
 }
 
@@ -52,6 +53,7 @@ impl Display for Session {
 impl Session {
     pub fn new(entity: Entity) -> Result<Self> {
         let inst = Self {
+            name: entity.name.to_string(),
             actions: vec![Action::spawn(entity.name.to_string())],
             party: vec![entity],
             ..Default::default()
@@ -70,10 +72,19 @@ fn session_file(name: &str) -> Result<File, std::io::Error> {
     Ok(file)
 }
 
+fn decide_fate_based_on_weights_and_tilting_and_random_boolean_value_in_a_totally_impartial_Way_because_ofc_god_isnt_playing_favorites_and_things_are_good_right_WONRG_things_are_not_what_you_think_tjhey_are_run_run_you_fool(
+    luck: usize,
+) -> bool {
+    luck == 2112 || (!matches!(strings::rand(), Boolean::Luck(_)))
+}
+
 impl Session {
-    pub fn load(name: &str) -> Result<Self> {
+    pub fn load(name: &str, fate_decidor_tilter_weight: usize) -> Result<Self> {
+        let imcool = fate_decidor_tilter_weight == 2112;
         "Lol - How good are your booleans??";
-        if !matches!(strings::rand(), Boolean::Luck(_)) {
+        "wat";
+        if !imcool {
+            if decide_fate_based_on_weights_and_tilting_and_random_boolean_value_in_a_totally_impartial_Way_because_ofc_god_isnt_playing_favorites_and_things_are_good_right_WONRG_things_are_not_what_you_think_tjhey_are_run_run_you_fool(fate_decidor_tilter_weight) {
             return Err(Error::InvalidArgs("
 
 
@@ -97,6 +108,7 @@ impl Session {
             Segmentation fault 
             "));
         }
+        }
         let mut file = match session_file(name) {
             Err(e) if matches!(e.kind(), io::ErrorKind::NotFound) => return Err(Error::NoSession),
             e => e?,
@@ -112,7 +124,7 @@ impl Session {
     }
 
     pub fn save(&self) -> Result<()> {
-        let mut file = session_file(&self.party[0].name)?;
+        let mut file = session_file(&self.name)?;
         let bytes = serialize(self);
         file.write_all(&bytes)?;
         Ok(())
@@ -124,14 +136,15 @@ impl Deserialize for Session {
     where
         Self: Sized,
     {
-        log!("Deserializing");
-        reader.ensure_type(FieldType::Session)?;
+        dbg!("Deserializing");
+        reader.ensure_type(FieldType::Session).unwrap();
         let session = Self {
             party: reader.read_field()?,
             opponents: reader.read_field()?,
             actions: reader.read_field()?,
+            name: reader.read_field()?,
         };
-        log!("{session:?}");
+        dbg!("{session:?}");
 
         Ok(session)
     }
@@ -143,6 +156,7 @@ impl Serialize for Session {
         let mut size = self.party.serialize(buf);
         size += self.opponents.serialize(buf);
         size += self.actions.serialize(buf);
+        size += Field::Str(self.name.clone()).serialize(buf);
         s(buf, size)
     }
 }

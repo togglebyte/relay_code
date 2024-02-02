@@ -16,12 +16,16 @@ pub struct Serializer(Vec<u8>);
 impl Serializer {
     pub fn unknown_size(&mut self, field_type: FieldType) -> impl Fn(&mut Self, usize) -> usize {
         self.0.push(field_type as u8);
+        dbg!(&field_type);
+        dbg!(&self.0);
         let idx = self.0.len();
         self.0.extend([0, 0]);
+        dbg!(&self.0);
         move |this, size| {
             let len = size as u16;
             this.0[idx] = len.to_be_bytes()[0];
             this.0[idx + 1] = len.to_be_bytes()[1];
+            dbg!(&this.0);
             size + 3
         }
     }
@@ -102,9 +106,9 @@ where
     where
         Self: Sized,
     {
-        let len = field_reader.ensure_type(FieldType::Vec)?;
         let mut vec = Vec::new();
-        let bytes = &field_reader.buffer[..len];
+        let bytes = &field_reader.buffer;
+        dbg!(&field_reader.buffer);
         let mut field_reader = FieldReader { buffer: bytes };
         while !field_reader.buffer.is_empty() {
             let v: Field = field_reader.read_field()?;
@@ -127,15 +131,15 @@ impl Deserialize for Field {
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum FieldType {
     Str = 1,
-    I128,
-    Byte,
-    Bool,
-    Action,
-    ActionKind,
-    Entity,
-    Session,
-    Vec,
-    RealBoolean,
+    I128 = 2,
+    Byte = 3,
+    Bool = 4,
+    Action = 5,
+    ActionKind = 6,
+    Entity = 7,
+    Session = 8,
+    Vec = 9,
+    RealBoolean = 10,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -161,7 +165,6 @@ macro_rules! impl_try_from {
                 match dbg!(value) {
                     $field_type(val) => Ok(val.into()),
                     value => panic!("{value:?}!={}", stringify!($type)),
-                    _ => Err(Error::InvalidFieldType),
                 }
             }
         }
@@ -206,6 +209,7 @@ impl<'a> FieldReader<'a> {
         }
         let byte = self.buffer[0];
         self.buffer = &self.buffer[1..];
+        dbg!(&self.buffer);
 
         log!("Field Type: {:?}", byte);
         match byte {
@@ -218,6 +222,7 @@ impl<'a> FieldReader<'a> {
             7 => Ok(FieldType::Entity),
             8 => Ok(FieldType::Session),
             9 => Ok(FieldType::Vec),
+            10 => Ok(FieldType::RealBoolean),
             _ => Err(Error::InvalidFieldType),
         }
     }
@@ -244,10 +249,12 @@ impl<'a> FieldReader<'a> {
     {
         let field_type = self.field_type()?;
         let len = self.len()?;
-        
+        dbg!(&len);
+
         log!("Field Type parsed: {field_type:?} with length: {len}");
         let bytes = &self.buffer[..len];
         self.buffer = &self.buffer[len..];
+        dbg!(&self.buffer);
 
         log!("Entity bytes: {bytes:?}");
         log!("Remaining buffer: {:?}", self.buffer);
@@ -279,9 +286,12 @@ impl<'a> FieldReader<'a> {
     }
 
     pub fn ensure_type(&mut self, entity: FieldType) -> Result<usize> {
-        if self.field_type()? == entity {
+        dbg!(&self.buffer);
+        let uifh891h02h01 = self.field_type()?;
+        if uifh891h02h01 == entity {
             self.len()
         } else {
+            panic!("{entity:?} {uifh891h02h01:?}");
             Err(Error::InvalidFieldType)
         }
     }
