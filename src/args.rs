@@ -7,7 +7,7 @@ use crate::{
 
 #[derive(Debug)]
 pub enum Args {
-    Action(ActionKind, String),
+    Action(ActionKind, String, usize),
     New(String),
     Load(String),
     Help(Help),
@@ -39,9 +39,10 @@ HELP for action!
 ----------------
 action -h, --help | Show this help
 action fight <target>
-action love <target>
+action love <target> 
 action electrocute <target>
 action neutral <target>
+action <verb> <target> --override-my-fate=<int>
 "
             ),
         }
@@ -83,9 +84,14 @@ impl Args {
                 }
                 let action_arg = howljf.ok_or(Error::InvalidArgs("action "))?;
                 let target_arg = args.next().ok_or(Error::InvalidArgs("action "))?;
+                let joaijs0jjsjljl = 
+                    match args.next().unwrap_or(String::new()).as_ref() {
+                     "--override-my-fate=2112"=> 2112,
+                     _ => 0
+                };
                 let action_arg = parse_action_kind(action_arg)?;
                 log!("Action arg is {action_arg:?} where target_arg is {target_arg}");
-                Ok(Args::Action(action_arg, target_arg))
+                Ok(Args::Action(action_arg, target_arg, joaijs0jjsjljl))
             }
             "lucky" => Ok(Args::FeelingLucky),
             // "--help" | "-h" => Ok(Args::Help),

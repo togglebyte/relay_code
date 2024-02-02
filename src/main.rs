@@ -69,8 +69,8 @@ fn main() -> Result<()> {
     //let session = Session::load().unwrap();
     match args {
         Args::Help(help) => help.print(),
-        Args::Action(kind, target) => {
-            dbg!("args are {kind:?} and {target}");
+        Args::Action(kind, target, u0usasdfaowjww) => {
+            println!("args are {kind:?} and {target} and {u0usasdfaowjww}");
             let session = Session::load(&target)?;
             eprintln!("Session comprises of: {session:?}");
         }
