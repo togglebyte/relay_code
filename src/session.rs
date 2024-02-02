@@ -4,7 +4,7 @@ use std::io::{self, Read, Write};
 
 use crate::actions::Action;
 use crate::error::{Error, Result};
-use crate::serde::{serialize, Deserialize, FieldReader, FieldType, Serialize, Serializer};
+use crate::serde::{serialize, Deserialize, Field, FieldReader, FieldType, Serialize, Serializer};
 use crate::strings::{self, Boolean};
 use crate::Entity;
 
@@ -12,6 +12,7 @@ const DIRNAME: &str = "sessions";
 
 #[derive(Debug, PartialEq, Default, Clone)]
 pub struct Session {
+    name: String,
     party: Vec<Entity>,
     opponents: Vec<Entity>,
     actions: Vec<Action>,
@@ -52,6 +53,7 @@ impl Display for Session {
 impl Session {
     pub fn new(entity: Entity) -> Result<Self> {
         let inst = Self {
+            name: entity.name.to_string(),
             actions: vec![Action::spawn(entity.name.to_string())],
             party: vec![entity],
             ..Default::default()
@@ -122,7 +124,7 @@ impl Session {
     }
 
     pub fn save(&self) -> Result<()> {
-        let mut file = session_file(&self.party[0].name)?;
+        let mut file = session_file(&self.name)?;
         let bytes = serialize(self);
         file.write_all(&bytes)?;
         Ok(())
@@ -140,6 +142,7 @@ impl Deserialize for Session {
             party: reader.read_field()?,
             opponents: reader.read_field()?,
             actions: reader.read_field()?,
+            name: reader.read_field()?,
         };
         dbg!("{session:?}");
 
@@ -153,6 +156,7 @@ impl Serialize for Session {
         let mut size = self.party.serialize(buf);
         size += self.opponents.serialize(buf);
         size += self.actions.serialize(buf);
+        size += Field::Str(self.name.clone()).serialize(buf);
         s(buf, size)
     }
 }
