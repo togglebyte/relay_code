@@ -40,6 +40,7 @@ HELP for action!
 action -h, --help | Show this help
 action fight <target>
 action love <target>
+action electrocute <target>
 action neutral <target>
 "
             ),
@@ -51,6 +52,7 @@ fn parse_action_kind<S: AsRef<str>>(action: S) -> Result<ActionKind> {
     match action.as_ref().to_lowercase().as_str() {
         "fight" => Ok(ActionKind::Fight),
         "love" => Ok(ActionKind::Love),
+        "electrocute" => Ok(ActionKind::ElectroCute),
         "neutral" => Ok(ActionKind::Neutral),
         _ => Err(Error::InvalidActionType),
     }

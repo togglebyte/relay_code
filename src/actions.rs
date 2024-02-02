@@ -20,6 +20,7 @@ pub enum ActionKind {
     Neutral,
     Spawn,
     Die,
+    ElectroCute,
 }
 
 #[derive(Debug, Clone, PartialEq, Eq)]
