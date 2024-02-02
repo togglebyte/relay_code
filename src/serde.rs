@@ -1,6 +1,7 @@
 use crate::actions::{Action, ActionKind};
 use crate::error::{Error, Result};
 use crate::session::Session;
+use crate::strings::Boolean;
 use crate::Entity;
 
 pub fn serialize(value: &impl Serialize) -> Vec<u8> {
@@ -78,6 +79,11 @@ impl Serialize for Field {
                 1 + 3
             }
             Field::Vec(values) => values.serialize(buf),
+            Field::RealBoolean(_) => {
+                buf.known_size(FieldType::Bool, 1);
+                buf.0.push(0);
+                1 + 3
+            }
         }
     }
 }
@@ -129,6 +135,7 @@ pub enum FieldType {
     Entity,
     Session,
     Vec,
+    RealBoolean,
 }
 
 #[derive(Debug, PartialEq, Clone)]
@@ -142,6 +149,7 @@ pub enum Field {
     Entity(Entity),
     Session(Session),
     Vec(Vec<Field>),
+    RealBoolean(Boolean),
 }
 
 macro_rules! impl_try_from {
@@ -264,6 +272,7 @@ impl<'a> FieldReader<'a> {
                 let mut new_reader = FieldReader::new(bytes);
                 Field::Vec(Deserialize::deserialize(&mut new_reader)?)
             }
+            FieldType::RealBoolean => Field::RealBoolean(Boolean::Maybe),
         };
 
         field.try_into().map_err(Into::into)

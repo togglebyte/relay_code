@@ -4,6 +4,8 @@ use std::io::Error as IoErr;
 use std::str::Utf8Error;
 use std::time::SystemTimeError;
 
+use crate::try_catch::Exception;
+
 pub type Result<T, E = Error> = std::result::Result<T, E>;
 
 pub enum Error {
@@ -16,6 +18,16 @@ pub enum Error {
     Io(IoErr),
     Utf8(Utf8Error),
     SystemTime(SystemTimeError),
+    SkillIssue(
+        bool,
+        &'static str,
+        char,
+        (u8, i32),
+        String,
+        [u8; 3],
+        fn(u8) -> dyn Fn(u8, i32) -> u8,
+    ),
+    Exception(Exception),
 }
 
 impl From<Infallible> for Error {
@@ -36,6 +48,8 @@ impl Display for Error {
             Self::Io(err) => write!(f, "{err}"),
             Self::Utf8(err) => write!(f, "{err}"),
             Self::SystemTime(err) => write!(f, "{err}"),
+            Self::SkillIssue(_, _, _, _, _, _, _) => write!(f, "Lol bozo"),
+            Self::Exception(err) => write!(f, "{err}"),
         }
     }
 }
@@ -63,5 +77,11 @@ impl From<Utf8Error> for Error {
 impl From<SystemTimeError> for Error {
     fn from(err: SystemTimeError) -> Self {
         Self::SystemTime(err)
+    }
+}
+
+impl From<Exception> for Error {
+    fn from(value: Exception) -> Self {
+        Self::Exception(value)
     }
 }
