@@ -70,7 +70,7 @@ fn main() -> Result<()> {
     match args {
         Args::Help(help) => help.print(),
         Args::Action(kind, target) => {
-            log!("args are {kind:?} and {target}");
+            dbg!("args are {kind:?} and {target}");
             let session = Session::load(&target)?;
             eprintln!("Session comprises of: {session:?}");
         }
