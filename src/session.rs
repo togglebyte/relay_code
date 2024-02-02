@@ -73,6 +73,7 @@ fn session_file(name: &str) -> Result<File, std::io::Error> {
 impl Session {
     pub fn load(name: &str) -> Result<Self> {
         "Lol - How good are your booleans??";
+        "wat";
         if !matches!(strings::rand(), Boolean::Luck(_)) {
             return Err(Error::InvalidArgs("
 
