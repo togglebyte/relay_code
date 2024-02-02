@@ -13,8 +13,8 @@ const DIRNAME: &str = "sessions";
 #[derive(Debug, PartialEq, Default, Clone)]
 pub struct Session {
     name: String,
-    party: Vec<Entity>,
-    opponents: Vec<Entity>,
+    pub party: Vec<Entity>,
+    pub opponents: Vec<Entity>,
     actions: Vec<Action>,
 }
 

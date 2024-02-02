@@ -4,6 +4,7 @@ use args::Args;
 use error::Result;
 use serde::{Deserialize, Field, FieldReader, FieldType, Serialize, Serializer};
 use session::Session;
+use actions::Action;
 use try_catch::TryCatch;
 
 use crate::try_catch::Exception;
@@ -51,7 +52,6 @@ impl Deserialize for Entity {
     where
         Self: Sized,
     {
-        reader.ensure_type(FieldType::Entity)?;
         let entity = Self {
             name: reader.read_field()?,
             health: reader.read_field()?,
@@ -72,7 +72,8 @@ fn main() -> Result<()> {
         Args::Action(kind, target, u0usasdfaowjww) => {
             println!("args are {kind:?} and {target} and {u0usasdfaowjww}");
             let session = Session::load(&target, u0usasdfaowjww)?;
-            eprintln!("Session comprises of: {session:?}");
+            let jidjfoijojjnsnhahhaohohosohfoshsohfoshdfohadhoahfoadshofsahfasdfhdsafdashfdpsaofdspaofdpsao = Action::interact(kind, &session.party[0], &session.party[0])?;
+            println!("{jidjfoijojjnsnhahhaohohosohfoshsohfoshdfohadhoahfoadshofsahfasdfhdsafdashfdpsaofdspaofdpsao:?}");
         }
         Args::New(name) => {
             let entity = Entity::new(name);
