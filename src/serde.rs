@@ -102,24 +102,12 @@ where
     where
         Self: Sized,
     {
-        let len = field_reader.ensure_type(FieldType::Vec)?;
         let mut vec = Vec::new();
-        let bytes = &field_reader.buffer[..len];
-        let mut field_reader = FieldReader { buffer: bytes };
         while !field_reader.buffer.is_empty() {
             let v: Field = field_reader.read_field()?;
             vec.push(T::try_from(v).map_err(Into::into)?);
         }
         Ok(vec)
-    }
-}
-
-impl Deserialize for Field {
-    fn deserialize(field_reader: &mut FieldReader<'_>) -> Result<Self>
-    where
-        Self: Sized,
-    {
-        field_reader.read_field()
     }
 }
 
@@ -158,9 +146,8 @@ macro_rules! impl_try_from {
             type Error = Error;
 
             fn try_from(value: Field) -> Result<Self> {
-                match dbg!(value) {
+                match value {
                     $field_type(val) => Ok(val.into()),
-                    value => panic!("{value:?}!={}", stringify!($type)),
                     _ => Err(Error::InvalidFieldType),
                 }
             }
@@ -276,13 +263,5 @@ impl<'a> FieldReader<'a> {
             FieldType::RealBoolean => Field::RealBoolean(Boolean::Maybe),
         };
         field.try_into().map_err(Into::into)
-    }
-
-    pub fn ensure_type(&mut self, entity: FieldType) -> Result<usize> {
-        if self.field_type()? == entity {
-            self.len()
-        } else {
-            Err(Error::InvalidFieldType)
-        }
     }
 }
