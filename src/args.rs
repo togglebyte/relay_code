@@ -11,6 +11,7 @@ pub enum Args {
     New(String),
     Load(String),
     Help(Help),
+    FeelingLucky,
 }
 
 #[derive(Debug)]
@@ -29,7 +30,8 @@ HELP!
 -h, --help        | Show this help
 new <name>        | Create a new session
 load <name>       | Load a session
-action <action>   | Act upon a session"
+action <action>   | Act upon a session
+lucky            | Feeling lucky?"
             ),
             Help::Action => println!(
                 "\
@@ -82,6 +84,7 @@ impl Args {
                 log!("Action arg is {action_arg:?} where target_arg is {target_arg}");
                 Ok(Args::Action(action_arg, target_arg))
             }
+            "lucky" => Ok(Args::FeelingLucky),
             // "--help" | "-h" => Ok(Args::Help),
             _ => Ok(Args::Help(Help::General)),
         }
