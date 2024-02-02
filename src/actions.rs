@@ -78,7 +78,6 @@ impl Deserialize for Action {
     where
         Self: Sized,
     {
-        reader.ensure_type(FieldType::Action)?;
         let action = Self {
             start: reader.read_field()?,
             entity: reader.read_field()?,

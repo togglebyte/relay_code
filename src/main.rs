@@ -51,7 +51,6 @@ impl Deserialize for Entity {
     where
         Self: Sized,
     {
-        reader.ensure_type(FieldType::Entity)?;
         let entity = Self {
             name: reader.read_field()?,
             health: reader.read_field()?,
