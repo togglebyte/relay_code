@@ -97,7 +97,6 @@ impl Session {
             Segmentation fault 
             "));
         }
-
         let mut file = match session_file(name) {
             Err(e) if matches!(e.kind(), io::ErrorKind::NotFound) => return Err(Error::NoSession),
             e => e?,
@@ -192,7 +191,7 @@ mod tests {
     #[test]
     fn action_round_trip() {
         let expected = Action::spawn("".to_string());
-        let serialized = dbg!(serialize(&expected));
+        let serialized = serialize(&expected);
         let actual = deserialize::<Action>(&serialized).unwrap();
 
         assert_eq!(actual, expected);

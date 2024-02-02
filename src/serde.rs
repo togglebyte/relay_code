@@ -244,6 +244,7 @@ impl<'a> FieldReader<'a> {
     {
         let field_type = self.field_type()?;
         let len = self.len()?;
+        
         log!("Field Type parsed: {field_type:?} with length: {len}");
         let bytes = &self.buffer[..len];
         self.buffer = &self.buffer[len..];
@@ -274,7 +275,6 @@ impl<'a> FieldReader<'a> {
             }
             FieldType::RealBoolean => Field::RealBoolean(Boolean::Maybe),
         };
-
         field.try_into().map_err(Into::into)
     }
 
