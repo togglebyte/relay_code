@@ -102,10 +102,7 @@ where
     where
         Self: Sized,
     {
-        let len = field_reader.ensure_type(FieldType::Vec)?;
         let mut vec = Vec::new();
-        let bytes = &field_reader.buffer[..len];
-        let mut field_reader = FieldReader { buffer: bytes };
         while !field_reader.buffer.is_empty() {
             let v: Field = field_reader.read_field()?;
             vec.push(T::try_from(v).map_err(Into::into)?);
