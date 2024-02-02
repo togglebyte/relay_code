@@ -111,15 +111,6 @@ where
     }
 }
 
-impl Deserialize for Field {
-    fn deserialize(field_reader: &mut FieldReader<'_>) -> Result<Self>
-    where
-        Self: Sized,
-    {
-        field_reader.read_field()
-    }
-}
-
 #[repr(u8)]
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum FieldType {
@@ -155,9 +146,8 @@ macro_rules! impl_try_from {
             type Error = Error;
 
             fn try_from(value: Field) -> Result<Self> {
-                match dbg!(value) {
+                match value {
                     $field_type(val) => Ok(val.into()),
-                    value => panic!("{value:?}!={}", stringify!($type)),
                     _ => Err(Error::InvalidFieldType),
                 }
             }
@@ -273,13 +263,5 @@ impl<'a> FieldReader<'a> {
         };
 
         field.try_into().map_err(Into::into)
-    }
-
-    pub fn ensure_type(&mut self, entity: FieldType) -> Result<usize> {
-        if self.field_type()? == entity {
-            self.len()
-        } else {
-            Err(Error::InvalidFieldType)
-        }
     }
 }

@@ -24,7 +24,7 @@ fn table_row<T>(
     mut extr: impl FnMut(T) -> String,
 ) -> fmt::Result {
     for value in values {
-        let value = &extr(value)[..col_width];
+        let value = &extr(value).chars().take(15).collect::<String>();
         write!(f, "{value:col_width$}  ")?;
     }
     writeln!(f)
@@ -41,8 +41,8 @@ impl Display for Session {
         writeln!(f, "\n\n")?;
 
         writeln!(f, "Party:\n=========")?;
-        table_row(f, 15, &self.opponents, |o| o.name.to_string())?;
-        table_row(f, 15, &self.opponents, |o| {
+        table_row(f, 15, &self.party, |o| o.name.to_string())?;
+        table_row(f, 15, &self.party, |o| {
             format!("{:♥<1$}", "", o.health as usize)
         })?;
         Ok(())
@@ -108,7 +108,7 @@ impl Session {
             log!("No session found");
             return Err(Error::NoSession);
         }
-        let mut reader = FieldReader::new(bytes.as_slice());
+        let mut reader = FieldReader::new(&bytes.as_slice()[3..]);
         Self::deserialize(&mut reader)
     }
 
@@ -126,7 +126,6 @@ impl Deserialize for Session {
         Self: Sized,
     {
         log!("Deserializing");
-        reader.ensure_type(FieldType::Session)?;
         let session = Self {
             party: reader.read_field()?,
             opponents: reader.read_field()?,
@@ -152,14 +151,14 @@ impl Serialize for Session {
 mod tests {
     use crate::{
         actions::{Action, ActionKind},
-        serde::{serialize, Deserialize, Field, FieldReader},
+        serde::{serialize, Deserialize, FieldReader},
         Entity,
     };
 
     use super::Session;
 
     fn deserialize<T: Deserialize>(bytes: &[u8]) -> crate::error::Result<T> {
-        let mut reader = FieldReader::new(bytes);
+        let mut reader = FieldReader::new(&bytes[3..]);
         T::deserialize(&mut reader)
     }
 
@@ -210,13 +209,5 @@ mod tests {
         let actual = deserialize::<Entity>(&serialized).unwrap();
 
         assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn bool_round_trip() {
-        let bool = Field::Bool(true);
-        let bytes = serialize(&bool);
-        assert_eq!(bytes, [4, 0, 1, 1]);
-        assert_eq!(bool, deserialize(&bytes).unwrap());
     }
 }
